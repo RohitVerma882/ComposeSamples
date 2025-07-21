@@ -1,4 +1,4 @@
-package com.composesamples
+package com.composesamples.ui
 
 import android.os.Bundle
 
@@ -10,13 +10,19 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 
-import com.composesamples.ui.MainScreen
+import com.composesamples.AppContainer
+import com.composesamples.AppLoader
+import com.composesamples.ui.navigation.AppNavigation
 import com.composesamples.ui.theme.AppTheme
 
 class MainActivity : ComponentActivity() {
+    private lateinit var appContainer: AppContainer
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+        appContainer = (application as AppLoader).appContainer
 
         setContent {
             AppTheme {
@@ -24,7 +30,7 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    MainScreen()
+                    AppNavigation(appContainer = appContainer)
                 }
             }
         }
