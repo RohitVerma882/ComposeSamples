@@ -1,6 +1,7 @@
 package com.composesamples.ui.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -11,12 +12,13 @@ import com.composesamples.ui.screen.InstalledAppsScreen
 import com.composesamples.ui.screen.MainScreen
 
 @Composable
-fun AppNavigation(appContainer: AppContainer) {
-    val navController = rememberNavController()
-
+fun AppNavigation(
+    appContainer: AppContainer,
+    navController: NavHostController = rememberNavController()
+) {
     NavHost(
         navController = navController,
-        startDestination = AppRoutes.MainScreen.route
+        startDestination = AppRoutes.MainScreen.route,
     ) {
         composable(AppRoutes.MainScreen.route) {
             MainScreen(

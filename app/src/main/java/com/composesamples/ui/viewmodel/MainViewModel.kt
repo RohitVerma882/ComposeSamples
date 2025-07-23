@@ -4,22 +4,21 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 
-import com.composesamples.data.model.SampleInfo
+import com.composesamples.data.model.SampleModel
 import com.composesamples.data.repository.SampleRepository
+import com.composesamples.utils.Resource
 
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 
 class MainViewModel(sampleRepository: SampleRepository) : ViewModel() {
-    val uiState: StateFlow<MainUiState> = sampleRepository
+    val samples: StateFlow<Resource<List<SampleModel>>> = sampleRepository
         .getSamples()
-        .map(MainUiState::Success)
         .stateIn(
             scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
-            initialValue = MainUiState.Loading
+            started = SharingStarted.Lazily,
+            initialValue = Resource.Loading()
         )
 }
 
@@ -33,9 +32,4 @@ class MainViewModelFactory(
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }
-}
-
-sealed class MainUiState {
-    object Loading : MainUiState()
-    data class Success(val samples: List<SampleInfo>) : MainUiState()
 }

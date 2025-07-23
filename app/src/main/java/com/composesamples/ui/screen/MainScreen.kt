@@ -40,11 +40,11 @@ import androidx.navigation.NavController
 
 import com.composesamples.AppConstants
 import com.composesamples.R
-import com.composesamples.data.model.SampleInfo
+import com.composesamples.data.model.SampleModel
 import com.composesamples.data.repository.SampleRepository
-import com.composesamples.ui.viewmodel.MainUiState
 import com.composesamples.ui.viewmodel.MainViewModel
 import com.composesamples.ui.viewmodel.MainViewModelFactory
+import com.composesamples.utils.Resource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -53,9 +53,9 @@ fun MainScreen(
     sampleRepository: SampleRepository,
     viewModel: MainViewModel = viewModel(factory = MainViewModelFactory(sampleRepository))
 ) {
-    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
     val uriHandler = LocalUriHandler.current
+    val samples by viewModel.samples.collectAsStateWithLifecycle()
 
     Scaffold(
         modifier = Modifier
@@ -73,7 +73,7 @@ fun MainScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding),
-            uiState = uiState,
+            samples = samples,
             onSampleClick = { sample ->
                 navController.navigate(sample.appRoute.route)
             }
@@ -102,12 +102,12 @@ private fun MainTopAppBar(
 @Composable
 private fun MainContent(
     modifier: Modifier,
-    uiState: MainUiState,
-    onSampleClick: (SampleInfo) -> Unit
+    samples: Resource<List<SampleModel>>,
+    onSampleClick: (SampleModel) -> Unit
 ) {
     Column(modifier = modifier) {
-        when (uiState) {
-            is MainUiState.Loading -> {
+        when (samples) {
+            is Resource.Loading -> {
                 Box(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
@@ -116,20 +116,22 @@ private fun MainContent(
                 }
             }
 
-            is MainUiState.Success -> {
+            is Resource.Success -> {
                 SamplesList(
-                    samples = uiState.samples,
+                    samples = samples.data!!,
                     onSampleClick = onSampleClick
                 )
             }
+
+            else -> {}
         }
     }
 }
 
 @Composable
 private fun SamplesList(
-    samples: List<SampleInfo>,
-    onSampleClick: (SampleInfo) -> Unit
+    samples: List<SampleModel>,
+    onSampleClick: (SampleModel) -> Unit
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxWidth(),
@@ -137,7 +139,7 @@ private fun SamplesList(
         contentPadding = PaddingValues(16.dp)
     ) {
         items(samples) { sample ->
-            SampleItem(sample.name) {
+            SampleItem(sample.nameId) {
                 onSampleClick.invoke(sample)
             }
         }
@@ -146,7 +148,7 @@ private fun SamplesList(
 
 @Composable
 private fun SampleItem(
-    name: Int,
+    nameId: Int,
     onClick: () -> Unit
 ) {
     OutlinedCard(
@@ -156,7 +158,7 @@ private fun SampleItem(
         Text(
             modifier = Modifier.padding(16.dp),
             style = MaterialTheme.typography.titleMedium,
-            text = stringResource(name)
+            text = stringResource(nameId)
         )
     }
 }

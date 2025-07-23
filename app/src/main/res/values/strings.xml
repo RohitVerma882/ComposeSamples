@@ -2,5 +2,9 @@
     <string name="app_name">Compose Samples</string>
 
     <string name="sample_hello_world_name">Hello World!</string>
+
     <string name="sample_installed_apps_name">Installed Apps</string>
+    <string name="sample_installed_apps_filter_all">All</string>
+    <string name="sample_installed_apps_filter_user">User</string>
+    <string name="sample_installed_apps_filter_system">System</string>
 </resources>
