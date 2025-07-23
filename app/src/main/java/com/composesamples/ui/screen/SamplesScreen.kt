@@ -42,55 +42,54 @@ import com.composesamples.AppConstants
 import com.composesamples.R
 import com.composesamples.data.model.SampleModel
 import com.composesamples.data.repository.SampleRepository
-import com.composesamples.ui.viewmodel.MainViewModel
-import com.composesamples.ui.viewmodel.MainViewModelFactory
+import com.composesamples.ui.navigation.AppRoutes
+import com.composesamples.ui.viewmodel.SamplesViewModel
+import com.composesamples.ui.viewmodel.SamplesViewModelFactory
 import com.composesamples.utils.Resource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainScreen(
+fun SamplesScreen(
     navController: NavController,
     sampleRepository: SampleRepository,
-    viewModel: MainViewModel = viewModel(factory = MainViewModelFactory(sampleRepository))
+    viewModel: SamplesViewModel = viewModel(factory = SamplesViewModelFactory(sampleRepository))
 ) {
+    val samples by viewModel.samples.collectAsStateWithLifecycle()
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
     val uriHandler = LocalUriHandler.current
-    val samples by viewModel.samples.collectAsStateWithLifecycle()
 
     Scaffold(
         modifier = Modifier
             .fillMaxSize()
             .nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
-            MainTopAppBar(
+            SamplesTopAppBar(
                 scrollBehavior = scrollBehavior,
-                onShowInfo = { uriHandler.openUri(AppConstants.GITHUB_SOURCE_CODE_URL) }
+                onInfoClick = { uriHandler.openUri(AppConstants.GITHUB_SOURCE_CODE_URL) }
             )
         },
         contentWindowInsets = WindowInsets.safeDrawing
     ) { innerPadding ->
-        MainContent(
+        SamplesContent(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding),
             samples = samples,
-            onSampleClick = { sample ->
-                navController.navigate(sample.appRoute.route)
-            }
+            onSampleClick = { appRoute -> navController.navigate(appRoute.route) }
         )
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun MainTopAppBar(
+private fun SamplesTopAppBar(
     scrollBehavior: TopAppBarScrollBehavior,
-    onShowInfo: () -> Unit
+    onInfoClick: () -> Unit
 ) {
     TopAppBar(
         title = { Text(stringResource(R.string.app_name)) },
         actions = {
-            IconButton(onClick = onShowInfo) {
+            IconButton(onClick = onInfoClick) {
                 Icon(Icons.Outlined.Info, contentDescription = null)
             }
         },
@@ -100,10 +99,10 @@ private fun MainTopAppBar(
 }
 
 @Composable
-private fun MainContent(
+private fun SamplesContent(
     modifier: Modifier,
     samples: Resource<List<SampleModel>>,
-    onSampleClick: (SampleModel) -> Unit
+    onSampleClick: (AppRoutes) -> Unit
 ) {
     Column(modifier = modifier) {
         when (samples) {
@@ -131,16 +130,19 @@ private fun MainContent(
 @Composable
 private fun SamplesList(
     samples: List<SampleModel>,
-    onSampleClick: (SampleModel) -> Unit
+    onSampleClick: (AppRoutes) -> Unit
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(16.dp),
         contentPadding = PaddingValues(16.dp)
     ) {
-        items(samples) { sample ->
+        items(
+            items = samples,
+            key = { it.nameId }
+        ) { sample ->
             SampleItem(sample.nameId) {
-                onSampleClick.invoke(sample)
+                onSampleClick(sample.appRoute)
             }
         }
     }

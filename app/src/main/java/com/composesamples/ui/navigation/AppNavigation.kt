@@ -9,7 +9,7 @@ import androidx.navigation.compose.rememberNavController
 import com.composesamples.AppContainer
 import com.composesamples.ui.screen.HelloWorldScreen
 import com.composesamples.ui.screen.InstalledAppsScreen
-import com.composesamples.ui.screen.MainScreen
+import com.composesamples.ui.screen.SamplesScreen
 
 @Composable
 fun AppNavigation(
@@ -18,10 +18,10 @@ fun AppNavigation(
 ) {
     NavHost(
         navController = navController,
-        startDestination = AppRoutes.MainScreen.route,
+        startDestination = AppRoutes.SamplesScreen.route,
     ) {
-        composable(AppRoutes.MainScreen.route) {
-            MainScreen(
+        composable(AppRoutes.SamplesScreen.route) {
+            SamplesScreen(
                 navController = navController,
                 sampleRepository = appContainer.sampleRepository
             )

@@ -12,7 +12,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 
-class MainViewModel(sampleRepository: SampleRepository) : ViewModel() {
+class SamplesViewModel(sampleRepository: SampleRepository) : ViewModel() {
     val samples: StateFlow<Resource<List<SampleModel>>> = sampleRepository
         .getSamples()
         .stateIn(
@@ -22,13 +22,13 @@ class MainViewModel(sampleRepository: SampleRepository) : ViewModel() {
         )
 }
 
-class MainViewModelFactory(
+class SamplesViewModelFactory(
     private val sampleRepository: SampleRepository
 ) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        if (modelClass.isAssignableFrom(MainViewModel::class.java)) {
+        if (modelClass.isAssignableFrom(SamplesViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
-            return MainViewModel(sampleRepository) as T
+            return SamplesViewModel(sampleRepository) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }
