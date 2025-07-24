@@ -20,7 +20,7 @@ class SampleRepositoryImpl : SampleRepository {
 
     override fun getSamples(): Flow<Resource<List<SampleModel>>> = flow {
         emit(Resource.Loading())
-        delay(300)
+        delay(500)
         emit(Resource.Success(samples))
     }
 }

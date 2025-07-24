@@ -66,7 +66,7 @@ class AppRepositoryImpl(private val context: Context) : AppRepository {
 
             val sortedApps = filteredApps.sortedBy { app -> app.name }
 
-            delay(300)
+            delay(500)
             emit(Resource.Success(sortedApps))
         } catch (e: Exception) {
             emit(Resource.Error("Failed to get installed apps: ${e.message ?: "Unknown error"}"))

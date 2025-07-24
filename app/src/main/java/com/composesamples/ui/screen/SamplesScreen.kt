@@ -2,7 +2,6 @@ package com.composesamples.ui.screen
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
@@ -45,7 +44,7 @@ import com.composesamples.R
 import com.composesamples.data.model.SampleModel
 import com.composesamples.ui.navigation.AppRoutes
 import com.composesamples.ui.viewmodel.SamplesViewModel
-import com.composesamples.utils.Resource
+import com.composesamples.ui.viewmodel.SamplesViewModelFactory
 
 import kotlinx.coroutines.launch
 
@@ -55,11 +54,10 @@ fun SamplesScreen(
     navController: NavController,
     appContainer: AppContainer,
     viewModel: SamplesViewModel = viewModel(
-        key = "samples_viewmodel",
-        factory = SamplesViewModel.provideFactory(appContainer)
+        factory = SamplesViewModelFactory(appContainer)
     )
 ) {
-    val samples by viewModel.samples.collectAsStateWithLifecycle()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
     val uriHandler = LocalUriHandler.current
@@ -72,7 +70,9 @@ fun SamplesScreen(
             .nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.app_name)) },
+                title = {
+                    Text(stringResource(R.string.app_name))
+                },
                 actions = {
                     IconButton(onClick = {
                         coroutineScope.launch {
@@ -88,30 +88,18 @@ fun SamplesScreen(
         },
         contentWindowInsets = WindowInsets.safeDrawing
     ) { innerPadding ->
-        Column(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            when (samples) {
-                is Resource.Loading -> {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator()
-                    }
-                }
-
-                is Resource.Success -> {
-                    val samples = (samples as Resource.Success<List<SampleModel>>).data
-                    SamplesList(
-                        samples = samples,
-                        onSampleClick = { appRoute -> navController.navigate(appRoute.route) }
-                    )
-                }
-
-                else -> {}
+            if (uiState.isLoading) {
+                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+            } else {
+                SamplesList(
+                    samples = uiState.samples,
+                    onSampleClick = { appRoute -> navController.navigate(appRoute.route) }
+                )
             }
         }
     }

@@ -9,32 +9,59 @@ import com.composesamples.data.model.SampleModel
 import com.composesamples.data.repository.SampleRepository
 import com.composesamples.utils.Resource
 
-import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 
-class SamplesViewModel(sampleRepository: SampleRepository) : ViewModel() {
-    val samples: StateFlow<Resource<List<SampleModel>>> = sampleRepository
-        .getSamples()
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.Lazily,
-            initialValue = Resource.Loading()
-        )
+class SamplesViewModel(private val sampleRepository: SampleRepository) : ViewModel() {
+    private val _uiState = MutableStateFlow(SamplesUiState())
+    val uiState: StateFlow<SamplesUiState> = _uiState.asStateFlow()
 
-    companion object {
-        fun provideFactory(appContainer: AppContainer): ViewModelProvider.Factory {
-            return object : ViewModelProvider.Factory {
-                override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                    if (modelClass.isAssignableFrom(SamplesViewModel::class.java)) {
-                        @Suppress("UNCHECKED_CAST")
-                        return SamplesViewModel(
-                            sampleRepository = appContainer.sampleRepository
-                        ) as T
+    init {
+        loadSamples()
+    }
+
+    private fun loadSamples() {
+        viewModelScope.launch {
+            sampleRepository.getSamples().collect { samples ->
+                when (samples) {
+                    is Resource.Loading -> {
+                        _uiState.update { currentState ->
+                            currentState.copy(isLoading = true)
+                        }
                     }
-                    throw IllegalArgumentException("Unknown ViewModel class")
+
+                    is Resource.Success -> {
+                        _uiState.update { currentState ->
+                            currentState.copy(
+                                isLoading = false,
+                                samples = samples.data
+                            )
+                        }
+                    }
+
+                    else -> {}
                 }
             }
         }
     }
 }
+
+class SamplesViewModelFactory(private val appContainer: AppContainer) : ViewModelProvider.Factory {
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        if (modelClass.isAssignableFrom(SamplesViewModel::class.java)) {
+            @Suppress("UNCHECKED_CAST")
+            return SamplesViewModel(
+                sampleRepository = appContainer.sampleRepository
+            ) as T
+        }
+        throw IllegalArgumentException("Unknown ViewModel class")
+    }
+}
+
+data class SamplesUiState(
+    val isLoading: Boolean = true,
+    val samples: List<SampleModel> = emptyList()
+)

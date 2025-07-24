@@ -57,7 +57,7 @@ import com.composesamples.R
 import com.composesamples.data.model.AppModel
 import com.composesamples.data.repository.AppFilterType
 import com.composesamples.ui.viewmodel.InstalledAppsViewModel
-import com.composesamples.utils.Resource
+import com.composesamples.ui.viewmodel.InstalledAppsViewModelFactory
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -65,12 +65,10 @@ fun InstalledAppsScreen(
     navController: NavController,
     appContainer: AppContainer,
     viewModel: InstalledAppsViewModel = viewModel(
-        key = "installed_apps_viewmodel",
-        factory = InstalledAppsViewModel.provideFactory(appContainer)
+        factory = InstalledAppsViewModelFactory(appContainer)
     )
 ) {
-    val apps by viewModel.apps.collectAsStateWithLifecycle()
-    val filterType by viewModel.filterType.collectAsStateWithLifecycle()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
 
@@ -97,30 +95,21 @@ fun InstalledAppsScreen(
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            AppsFilterToggle(filterType) { newFilterType ->
-                viewModel.setFilterType(newFilterType)
-            }
+            AppsFilterToggle(
+                selectedFilterType = uiState.filterType,
+                onFilterTypeSelected = { newFilterType -> viewModel.setFilterType(newFilterType) }
+            )
             HorizontalDivider()
 
-            when (apps) {
-                is Resource.Loading -> {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator()
-                    }
-                }
-
-                is Resource.Success -> {
-                    val apps = (apps as Resource.Success<List<AppModel>>).data
+            Box(modifier = Modifier.fillMaxSize()) {
+                if (uiState.isLoading) {
+                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                } else {
                     AppList(
-                        apps = apps,
+                        apps = uiState.apps,
                         onAppClick = { packageName -> }
                     )
                 }
-
-                else -> {}
             }
         }
     }
