@@ -25,9 +25,10 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -47,82 +48,71 @@ import com.composesamples.ui.viewmodel.SamplesViewModel
 import com.composesamples.ui.viewmodel.SamplesViewModelFactory
 import com.composesamples.utils.Resource
 
+import kotlinx.coroutines.launch
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SamplesScreen(
     navController: NavController,
     sampleRepository: SampleRepository,
-    viewModel: SamplesViewModel = viewModel(factory = SamplesViewModelFactory(sampleRepository))
+    viewModel: SamplesViewModel = viewModel(
+        factory = SamplesViewModelFactory(sampleRepository)
+    )
 ) {
     val samples by viewModel.samples.collectAsStateWithLifecycle()
+
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
     val uriHandler = LocalUriHandler.current
+
+    val coroutineScope = rememberCoroutineScope()
 
     Scaffold(
         modifier = Modifier
             .fillMaxSize()
             .nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
-            SamplesTopAppBar(
+            TopAppBar(
+                title = { Text(stringResource(R.string.app_name)) },
+                actions = {
+                    IconButton(onClick = {
+                        coroutineScope.launch {
+                            uriHandler.openUri(AppConstants.GITHUB_SOURCE_CODE_URL)
+                        }
+                    }) {
+                        Icon(Icons.Outlined.Info, contentDescription = null)
+                    }
+                },
                 scrollBehavior = scrollBehavior,
-                onInfoClick = { uriHandler.openUri(AppConstants.GITHUB_SOURCE_CODE_URL) }
+                windowInsets = WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Top)
             )
         },
         contentWindowInsets = WindowInsets.safeDrawing
     ) { innerPadding ->
-        SamplesContent(
+        Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding),
-            samples = samples,
-            onSampleClick = { appRoute -> navController.navigate(appRoute.route) }
-        )
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun SamplesTopAppBar(
-    scrollBehavior: TopAppBarScrollBehavior,
-    onInfoClick: () -> Unit
-) {
-    TopAppBar(
-        title = { Text(stringResource(R.string.app_name)) },
-        actions = {
-            IconButton(onClick = onInfoClick) {
-                Icon(Icons.Outlined.Info, contentDescription = null)
-            }
-        },
-        scrollBehavior = scrollBehavior,
-        windowInsets = WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Top)
-    )
-}
-
-@Composable
-private fun SamplesContent(
-    modifier: Modifier,
-    samples: Resource<List<SampleModel>>,
-    onSampleClick: (AppRoutes) -> Unit
-) {
-    Column(modifier = modifier) {
-        when (samples) {
-            is Resource.Loading -> {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator()
+                .padding(innerPadding)
+        ) {
+            when (samples) {
+                is Resource.Loading -> {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator()
+                    }
                 }
-            }
 
-            is Resource.Success -> {
-                SamplesList(
-                    samples = samples.data!!,
-                    onSampleClick = onSampleClick
-                )
-            }
+                is Resource.Success -> {
+                    val samples = (samples as Resource.Success<List<SampleModel>>).data
+                    SamplesList(
+                        samples = samples,
+                        onSampleClick = { appRoute -> navController.navigate(appRoute.route) }
+                    )
+                }
 
-            else -> {}
+                else -> {}
+            }
         }
     }
 }
@@ -141,8 +131,9 @@ private fun SamplesList(
             items = samples,
             key = { it.nameId }
         ) { sample ->
+            val appRoute by rememberUpdatedState(sample.appRoute)
             SampleItem(sample.nameId) {
-                onSampleClick(sample.appRoute)
+                onSampleClick(appRoute)
             }
         }
     }

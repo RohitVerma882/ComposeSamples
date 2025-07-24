@@ -1,7 +1,7 @@
 package com.composesamples.utils
 
-sealed class Resource<out T>(val data: T? = null, val message: String? = null) {
-    class Loading<out T>() : Resource<T>()
-    class Error<out T>(message: String) : Resource<T>(message = message)
-    class Success<out T>(data: T) : Resource<T>(data = data)
+sealed class Resource<out T> {
+    data class Success<out T>(val data: T) : Resource<T>()
+    data class Error(val message: String, val data: Nothing? = null) : Resource<Nothing>()
+    class Loading<out T>(val data: T? = null) : Resource<T>()
 }

@@ -1,5 +1,7 @@
 package com.composesamples.ui.screen
 
+import android.graphics.Bitmap
+
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -35,9 +37,9 @@ import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
@@ -49,6 +51,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+
 import com.composesamples.R
 import com.composesamples.data.model.AppModel
 import com.composesamples.data.repository.AppFilterType
@@ -63,13 +66,12 @@ fun InstalledAppsScreen(
     navController: NavController,
     appRepository: AppRepository,
     viewModel: InstalledAppsViewModel = viewModel(
-        factory = InstalledAppsViewModelFactory(
-            appRepository
-        )
+        factory = InstalledAppsViewModelFactory(appRepository)
     )
 ) {
     val apps by viewModel.apps.collectAsStateWithLifecycle()
-    val currentFilter by viewModel.filterType.collectAsStateWithLifecycle()
+    val filterType by viewModel.filterType.collectAsStateWithLifecycle()
+
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
 
     Scaffold(
@@ -77,77 +79,57 @@ fun InstalledAppsScreen(
             .fillMaxSize()
             .nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
-            InstalledAppsTopAppBar(
+            TopAppBar(
+                title = { Text(stringResource(R.string.sample_installed_apps_name)) },
+                navigationIcon = {
+                    IconButton(onClick = { navController.popBackStack() }) {
+                        Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = null)
+                    }
+                },
                 scrollBehavior = scrollBehavior,
-
-                )
+                windowInsets = WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Top),
+            )
         },
         contentWindowInsets = WindowInsets.safeDrawing
     ) { innerPadding ->
-        InstalledAppsContent(
+        Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding),
-            currentFilter = currentFilter,
-            apps = apps,
-            onFilterSelected = { newFilter -> viewModel.setFilterType(newFilter) }
-        )
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun InstalledAppsTopAppBar(scrollBehavior: TopAppBarScrollBehavior) {
-    TopAppBar(
-        scrollBehavior = scrollBehavior,
-        windowInsets = WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Top),
-        title = { Text(stringResource(R.string.sample_installed_apps_name)) },
-        navigationIcon = {
-            IconButton(onClick = {}) {
-                Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = null)
+                .padding(innerPadding)
+        ) {
+            AppsFilterToggle(filterType) { newFilterType ->
+                viewModel.setFilterType(newFilterType)
             }
-        }
-    )
-}
+            HorizontalDivider()
 
-@Composable
-private fun InstalledAppsContent(
-    modifier: Modifier,
-    currentFilter: AppFilterType,
-    apps: Resource<List<AppModel>>,
-    onFilterSelected: (AppFilterType) -> Unit
-) {
-    Column(modifier = modifier) {
-        AppsFilterToggle(currentFilter) { newFilter ->
-            onFilterSelected.invoke(newFilter)
-        }
-        HorizontalDivider()
-
-        when (apps) {
-            is Resource.Loading -> {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator()
+            when (apps) {
+                is Resource.Loading -> {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator()
+                    }
                 }
-            }
 
-            is Resource.Success -> {
-                AppList(
-                    apps = apps.data!!
-                )
-            }
+                is Resource.Success -> {
+                    val apps = (apps as Resource.Success<List<AppModel>>).data
+                    AppList(
+                        apps = apps,
+                        onAppClick = { packageName -> }
+                    )
+                }
 
-            else -> {}
+                else -> {}
+            }
         }
     }
 }
 
 @Composable
 fun AppsFilterToggle(
-    selectedFilter: AppFilterType,
-    onFilterSelected: (AppFilterType) -> Unit
+    selectedFilterType: AppFilterType,
+    onFilterTypeSelected: (AppFilterType) -> Unit
 ) {
     Row(
         modifier = Modifier
@@ -163,8 +145,8 @@ fun AppsFilterToggle(
         ) {
             AppFilterType.entries.forEachIndexed { index, filterType ->
                 SegmentedButton(
-                    selected = filterType == selectedFilter,
-                    onClick = { onFilterSelected(filterType) },
+                    selected = filterType == selectedFilterType,
+                    onClick = { onFilterTypeSelected(filterType) },
                     shape = SegmentedButtonDefaults.itemShape(
                         index = index,
                         count = AppFilterType.entries.size
@@ -193,7 +175,8 @@ fun AppsFilterToggle(
 
 @Composable
 private fun AppList(
-    apps: List<AppModel>
+    apps: List<AppModel>,
+    onAppClick: (String) -> Unit
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxWidth(),
@@ -204,8 +187,13 @@ private fun AppList(
             items = apps,
             key = { it.packageName }
         ) { app ->
-            AppItem(app) {
-
+            val packageName by rememberUpdatedState(app.packageName)
+            AppItem(
+                icon = app.icon,
+                name = app.name,
+                packageName = app.packageName
+            ) {
+                onAppClick(packageName)
             }
         }
     }
@@ -213,36 +201,45 @@ private fun AppList(
 
 @Composable
 private fun AppItem(
-    app: AppModel,
+    icon: Bitmap,
+    name: String,
+    packageName: String,
     onClick: () -> Unit
 ) {
     OutlinedCard(
         modifier = Modifier.fillMaxWidth(),
         onClick = onClick
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-               Image(
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Image(
                     modifier = Modifier.size(40.dp),
-                    bitmap = app.icon.asImageBitmap(),
+                    bitmap = icon.asImageBitmap(),
                     contentScale = ContentScale.Fit,
                     contentDescription = null
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
                     style = MaterialTheme.typography.titleMedium,
-                    maxLines = 2,
+                    maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
-                    text = app.name
+                    text = name
                 )
             }
             Spacer(modifier = Modifier.height(8.dp))
             Text(
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 2,
+                maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
-                text = app.packageName
+                text = packageName
             )
         }
     }

@@ -12,6 +12,10 @@ enum class AppFilterType {
 }
 
 interface AppRepository {
-    fun getInstalledApps(filterType: AppFilterType): Flow<Resource<List<AppModel>>>
+    fun getInstalledApps(
+        filterType: AppFilterType,
+        force: Boolean = false
+    ): Flow<Resource<List<AppModel>>>
+
     fun getAppDetails(packageName: String): Flow<Resource<AppModel>>
 }
