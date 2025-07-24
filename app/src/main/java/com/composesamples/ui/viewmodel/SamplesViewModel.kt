@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 
+import com.composesamples.AppContainer
 import com.composesamples.data.model.SampleModel
 import com.composesamples.data.repository.SampleRepository
 import com.composesamples.utils.Resource
@@ -20,16 +21,20 @@ class SamplesViewModel(sampleRepository: SampleRepository) : ViewModel() {
             started = SharingStarted.Lazily,
             initialValue = Resource.Loading()
         )
-}
 
-class SamplesViewModelFactory(
-    private val sampleRepository: SampleRepository
-) : ViewModelProvider.Factory {
-    override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        if (modelClass.isAssignableFrom(SamplesViewModel::class.java)) {
-            @Suppress("UNCHECKED_CAST")
-            return SamplesViewModel(sampleRepository) as T
+    companion object {
+        fun provideFactory(appContainer: AppContainer): ViewModelProvider.Factory {
+            return object : ViewModelProvider.Factory {
+                override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                    if (modelClass.isAssignableFrom(SamplesViewModel::class.java)) {
+                        @Suppress("UNCHECKED_CAST")
+                        return SamplesViewModel(
+                            sampleRepository = appContainer.sampleRepository
+                        ) as T
+                    }
+                    throw IllegalArgumentException("Unknown ViewModel class")
+                }
+            }
         }
-        throw IllegalArgumentException("Unknown ViewModel class")
     }
 }

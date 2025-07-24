@@ -52,21 +52,21 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 
+import com.composesamples.AppContainer
 import com.composesamples.R
 import com.composesamples.data.model.AppModel
 import com.composesamples.data.repository.AppFilterType
-import com.composesamples.data.repository.AppRepository
 import com.composesamples.ui.viewmodel.InstalledAppsViewModel
-import com.composesamples.ui.viewmodel.InstalledAppsViewModelFactory
 import com.composesamples.utils.Resource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun InstalledAppsScreen(
     navController: NavController,
-    appRepository: AppRepository,
+    appContainer: AppContainer,
     viewModel: InstalledAppsViewModel = viewModel(
-        factory = InstalledAppsViewModelFactory(appRepository)
+        key = "installed_apps_viewmodel",
+        factory = InstalledAppsViewModel.provideFactory(appContainer)
     )
 ) {
     val apps by viewModel.apps.collectAsStateWithLifecycle()

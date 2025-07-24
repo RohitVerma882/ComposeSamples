@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 
+import com.composesamples.AppContainer
 import com.composesamples.data.model.AppModel
 import com.composesamples.data.repository.AppFilterType
 import com.composesamples.data.repository.AppRepository
@@ -33,16 +34,20 @@ class InstalledAppsViewModel(appRepository: AppRepository) : ViewModel() {
     fun setFilterType(filterType: AppFilterType) {
         _filterType.value = filterType
     }
-}
 
-class InstalledAppsViewModelFactory(
-    private val appRepository: AppRepository
-) : ViewModelProvider.Factory {
-    override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        if (modelClass.isAssignableFrom(InstalledAppsViewModel::class.java)) {
-            @Suppress("UNCHECKED_CAST")
-            return InstalledAppsViewModel(appRepository) as T
+    companion object {
+        fun provideFactory(appContainer: AppContainer): ViewModelProvider.Factory {
+            return object : ViewModelProvider.Factory {
+                override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                    if (modelClass.isAssignableFrom(InstalledAppsViewModel::class.java)) {
+                        @Suppress("UNCHECKED_CAST")
+                        return InstalledAppsViewModel(
+                            appRepository = appContainer.appRepository
+                        ) as T
+                    }
+                    throw IllegalArgumentException("Unknown ViewModel class")
+                }
+            }
         }
-        throw IllegalArgumentException("Unknown ViewModel class")
     }
 }

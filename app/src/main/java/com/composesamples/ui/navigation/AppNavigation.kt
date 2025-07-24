@@ -23,7 +23,7 @@ fun AppNavigation(
         composable(AppRoutes.SamplesScreen.route) {
             SamplesScreen(
                 navController = navController,
-                sampleRepository = appContainer.sampleRepository
+                appContainer = appContainer
             )
         }
 
@@ -34,7 +34,7 @@ fun AppNavigation(
         composable(AppRoutes.InstalledAppsScreen.route) {
             InstalledAppsScreen(
                 navController = navController,
-                appRepository = appContainer.appRepository
+                appContainer = appContainer
             )
         }
     }

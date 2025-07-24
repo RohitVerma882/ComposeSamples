@@ -40,12 +40,11 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 
 import com.composesamples.AppConstants
+import com.composesamples.AppContainer
 import com.composesamples.R
 import com.composesamples.data.model.SampleModel
-import com.composesamples.data.repository.SampleRepository
 import com.composesamples.ui.navigation.AppRoutes
 import com.composesamples.ui.viewmodel.SamplesViewModel
-import com.composesamples.ui.viewmodel.SamplesViewModelFactory
 import com.composesamples.utils.Resource
 
 import kotlinx.coroutines.launch
@@ -54,9 +53,10 @@ import kotlinx.coroutines.launch
 @Composable
 fun SamplesScreen(
     navController: NavController,
-    sampleRepository: SampleRepository,
+    appContainer: AppContainer,
     viewModel: SamplesViewModel = viewModel(
-        factory = SamplesViewModelFactory(sampleRepository)
+        key = "samples_viewmodel",
+        factory = SamplesViewModel.provideFactory(appContainer)
     )
 ) {
     val samples by viewModel.samples.collectAsStateWithLifecycle()
