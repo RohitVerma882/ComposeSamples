@@ -4,7 +4,7 @@ import androidx.annotation.StringRes
 
 import com.composesamples.ui.navigation.AppRoutes
 
-data class SampleModel(
+data class SampleInfo(
     @StringRes val nameId: Int,
     val appRoute: AppRoutes
 )

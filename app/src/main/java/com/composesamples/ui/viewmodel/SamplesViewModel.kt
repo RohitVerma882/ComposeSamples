@@ -5,7 +5,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 
 import com.composesamples.AppContainer
-import com.composesamples.data.model.SampleModel
+import com.composesamples.data.model.SampleInfo
 import com.composesamples.data.repository.SampleRepository
 import com.composesamples.utils.Resource
 
@@ -63,5 +63,5 @@ class SamplesViewModelFactory(private val appContainer: AppContainer) : ViewMode
 
 data class SamplesUiState(
     val isLoading: Boolean = true,
-    val samples: List<SampleModel> = emptyList()
+    val samples: List<SampleInfo> = emptyList()
 )

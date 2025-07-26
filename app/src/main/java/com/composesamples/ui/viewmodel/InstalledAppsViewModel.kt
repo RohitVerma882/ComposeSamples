@@ -5,8 +5,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 
 import com.composesamples.AppContainer
-import com.composesamples.data.model.AppModel
-import com.composesamples.data.repository.AppFilterType
+import com.composesamples.data.model.AppMetadata
 import com.composesamples.data.repository.AppRepository
 import com.composesamples.utils.Resource
 
@@ -14,13 +13,11 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class InstalledAppsViewModel(private val appRepository: AppRepository) : ViewModel() {
-    private val _filterType = MutableStateFlow(AppFilterType.ALL)
-
     private val _uiState = MutableStateFlow(InstalledAppsUiState())
     val uiState: StateFlow<InstalledAppsUiState> = _uiState.asStateFlow()
 
@@ -28,34 +25,29 @@ class InstalledAppsViewModel(private val appRepository: AppRepository) : ViewMod
         loadApps()
     }
 
-    @OptIn(ExperimentalCoroutinesApi::class)
     private fun loadApps() {
         viewModelScope.launch {
-            combine(
-                _filterType,
-                _filterType.flatMapLatest { filterType ->
-                    appRepository.getInstalledApps(filterType)
-                }
-            ) { filterType, apps ->
-                InstalledAppsUiState(
-                    isLoading = apps is Resource.Loading,
-                    filterType = filterType,
-                    apps = when (apps) {
-                        is Resource.Success -> {
-                            apps.data
+            appRepository.getInstalledApps().collect { apps ->
+                when (apps) {
+                    is Resource.Loading -> {
+                        _uiState.update { currentState ->
+                            currentState.copy(isLoading = true)
                         }
-
-                        else -> emptyList()
                     }
-                )
-            }.collect { uiState ->
-                _uiState.value = uiState
+
+                    is Resource.Success -> {
+                        _uiState.update { currentState ->
+                            currentState.copy(
+                                isLoading = false,
+                                apps = apps.data
+                            )
+                        }
+                    }
+
+                    else -> {}
+                }
             }
         }
-    }
-
-    fun setFilterType(filterType: AppFilterType) {
-        _filterType.value = filterType
     }
 }
 
@@ -75,6 +67,5 @@ class InstalledAppsViewModelFactory(
 
 data class InstalledAppsUiState(
     val isLoading: Boolean = true,
-    val filterType: AppFilterType = AppFilterType.ALL,
-    val apps: List<AppModel> = emptyList()
+    val apps: List<AppMetadata> = emptyList()
 )

@@ -41,7 +41,7 @@ import androidx.navigation.NavController
 import com.composesamples.AppConstants
 import com.composesamples.AppContainer
 import com.composesamples.R
-import com.composesamples.data.model.SampleModel
+import com.composesamples.data.model.SampleInfo
 import com.composesamples.ui.navigation.AppRoutes
 import com.composesamples.ui.viewmodel.SamplesViewModel
 import com.composesamples.ui.viewmodel.SamplesViewModelFactory
@@ -70,9 +70,7 @@ fun SamplesScreen(
             .nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
             TopAppBar(
-                title = {
-                    Text(stringResource(R.string.app_name))
-                },
+                title = { Text(stringResource(R.string.app_name)) },
                 actions = {
                     IconButton(onClick = {
                         coroutineScope.launch {
@@ -107,7 +105,7 @@ fun SamplesScreen(
 
 @Composable
 private fun SamplesList(
-    samples: List<SampleModel>,
+    samples: List<SampleInfo>,
     onSampleClick: (AppRoutes) -> Unit
 ) {
     LazyColumn(
@@ -120,9 +118,10 @@ private fun SamplesList(
             key = { it.nameId }
         ) { sample ->
             val appRoute by rememberUpdatedState(sample.appRoute)
-            SampleItem(sample.nameId) {
-                onSampleClick(appRoute)
-            }
+            SampleItem(
+                nameId = sample.nameId,
+                onClick = { onSampleClick(appRoute) }
+            )
         }
     }
 }

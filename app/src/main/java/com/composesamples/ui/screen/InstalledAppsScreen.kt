@@ -25,15 +25,11 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SegmentedButtonDefaults
-import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -54,8 +50,7 @@ import androidx.navigation.NavController
 
 import com.composesamples.AppContainer
 import com.composesamples.R
-import com.composesamples.data.model.AppModel
-import com.composesamples.data.repository.AppFilterType
+import com.composesamples.data.model.AppMetadata
 import com.composesamples.ui.viewmodel.InstalledAppsViewModel
 import com.composesamples.ui.viewmodel.InstalledAppsViewModelFactory
 
@@ -90,73 +85,18 @@ fun InstalledAppsScreen(
         },
         contentWindowInsets = WindowInsets.safeDrawing
     ) { innerPadding ->
-        Column(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            AppsFilterToggle(
-                selectedFilterType = uiState.filterType,
-                onFilterTypeSelected = { newFilterType -> viewModel.setFilterType(newFilterType) }
-            )
-            HorizontalDivider()
-
-            Box(modifier = Modifier.fillMaxSize()) {
-                if (uiState.isLoading) {
-                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-                } else {
-                    AppList(
-                        apps = uiState.apps,
-                        onAppClick = { packageName -> }
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun AppsFilterToggle(
-    selectedFilterType: AppFilterType,
-    onFilterTypeSelected: (AppFilterType) -> Unit
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp),
-        horizontalArrangement = Arrangement.SpaceAround,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        SingleChoiceSegmentedButtonRow(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp)
-        ) {
-            AppFilterType.entries.forEachIndexed { index, filterType ->
-                SegmentedButton(
-                    selected = filterType == selectedFilterType,
-                    onClick = { onFilterTypeSelected(filterType) },
-                    shape = SegmentedButtonDefaults.itemShape(
-                        index = index,
-                        count = AppFilterType.entries.size
-                    ),
-                    colors = SegmentedButtonDefaults.colors(
-                        activeContainerColor = MaterialTheme.colorScheme.primary,
-                        activeContentColor = MaterialTheme.colorScheme.onPrimary,
-                        inactiveContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-                        inactiveContentColor = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                ) {
-                    Text(
-                        text = stringResource(
-                            when (filterType) {
-                                AppFilterType.ALL -> R.string.sample_installed_apps_filter_all
-                                AppFilterType.USER -> R.string.sample_installed_apps_filter_user
-                                AppFilterType.SYSTEM -> R.string.sample_installed_apps_filter_system
-                            }
-                        )
-                    )
-                }
+            if (uiState.isLoading) {
+                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+            } else {
+                AppList(
+                    apps = uiState.apps,
+                    onAppClick = { packageName -> /* TODO */ }
+                )
             }
         }
     }
@@ -164,7 +104,7 @@ fun AppsFilterToggle(
 
 @Composable
 private fun AppList(
-    apps: List<AppModel>,
+    apps: List<AppMetadata>,
     onAppClick: (String) -> Unit
 ) {
     LazyColumn(
@@ -180,10 +120,9 @@ private fun AppList(
             AppItem(
                 icon = app.icon,
                 name = app.name,
-                packageName = app.packageName
-            ) {
-                onAppClick(packageName)
-            }
+                packageName = app.packageName,
+                onClick = { onAppClick(packageName) }
+            )
         }
     }
 }
